@@ -15,7 +15,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
-        repository: 'https://github.com/clojure/clojure-site.git'
+        repository: 'clojure/clojure-site'
     - name: debug 
       run: ls -la
     - name: install jbake

@@ -1,0 +1,51 @@
+name: Makefile CI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        repository: 'https://github.com/clojure/clojure-site.git'
+    - name: debug 
+      run: ls -la
+    - name: install jbake
+      run: curl -L -O https://github.com/jbake-org/jbake/releases/download/v2.6.7/jbake-2.6.7-bin.zip && unzip -o jbake-*-bin.zip
+    - name: add theme
+      run: curl -O https://clojure.org/clojuretheme.zip && unzip -o clojuretheme.zip
+    - name: build 
+      run: ./jbake-*-bin/bin/jbake -b
+
+    - name: mirror doc
+      run: ./jbake-*-bin/bin/jbake -s & sleep 10 && wget --mirror  --convert-links  --html-extension localhost:8820 || true
+    - name: make zip
+      run: mv localhost:8820 clojure.org && rm -f clojure.org/feed.xml && zip -9r clojure-org.zip clojure.org
+      
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        # Artifact name
+        name: clojure-org.zip
+        # A file, directory or wildcard pattern that describes what to upload
+        path: clojure-org.zip
+        # The desired behavior if no files are found using the provided path.
+
+        #if-no-files-found: # optional, default is warn
+        # Duration after which artifact will expire in days. 0 means using default retention.
+       #   Minimum 1 day. Maximum 90 days unless changed from the repository settings page.
+
+        #retention-days: # optional
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      #if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: clojure-org.zip
